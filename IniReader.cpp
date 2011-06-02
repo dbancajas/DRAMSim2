@@ -42,7 +42,7 @@ uint DEVICE_WIDTH;
 
 uint REFRESH_PERIOD;
 float tCK;
-float Vdd;
+float Vdd2;
 uint CL;
 uint AL;
 uint BL;
@@ -162,7 +162,7 @@ static ConfigMap configMap[] =
 	DEFINE_UINT_PARAM(IDD6,DEV_PARAM),
 	DEFINE_UINT_PARAM(IDD6L,DEV_PARAM),
 	DEFINE_UINT_PARAM(IDD7,DEV_PARAM),
-	DEFINE_FLOAT_PARAM(Vdd,DEV_PARAM),
+	DEFINE_FLOAT_PARAM(Vdd2,DEV_PARAM),
 
 	DEFINE_UINT_PARAM(NUM_CHANS,SYS_PARAM),
 	DEFINE_UINT_PARAM(CACHE_LINE_SIZE,SYS_PARAM),
@@ -288,7 +288,7 @@ void IniReader::SetKey(string key, string valueString, bool isSystemParam, size_
 			case UINT:
 				if ((iss >> dec >> intValue).fail())
 				{
-					ERROR("could not parse line "<<lineNumber<<" (non-numeric value '"<<valueString<<"')?");
+					ERROR_DRAM("could not parse line "<<lineNumber<<" (non-numeric value '"<<valueString<<"')?");
 				}
 				*((uint *)configMap[i].variablePtr) = intValue;
 				if (DEBUG_INI_READER)
@@ -299,7 +299,7 @@ void IniReader::SetKey(string key, string valueString, bool isSystemParam, size_
 			case UINT64:
 				if ((iss >> dec >> int64Value).fail())
 				{
-					ERROR("could not parse line "<<lineNumber<<" (non-numeric value '"<<valueString<<"')?");
+					ERROR_DRAM("could not parse line "<<lineNumber<<" (non-numeric value '"<<valueString<<"')?");
 				}
 				*((uint64_t *)configMap[i].variablePtr) = int64Value;
 				if (DEBUG_INI_READER)
@@ -310,7 +310,7 @@ void IniReader::SetKey(string key, string valueString, bool isSystemParam, size_
 			case FLOAT:
 				if ((iss >> dec >> floatValue).fail())
 				{
-					ERROR("could not parse line "<<lineNumber<<" (non-numeric value '"<<valueString<<"')?");
+					ERROR_DRAM("could not parse line "<<lineNumber<<" (non-numeric value '"<<valueString<<"')?");
 				}
 				*((float *)configMap[i].variablePtr) = floatValue;
 				if (DEBUG_INI_READER)
@@ -380,7 +380,7 @@ void IniReader::ReadIniFile(string filename, bool isSystemFile)
 			//this can happen if the filename is actually a directory
 			if (iniFile.bad())
 			{
-				ERROR("Cannot read ini file '"<<filename<<"'");
+				ERROR_DRAM("Cannot read ini file '"<<filename<<"'");
 				exit(-1);
 			}
 			// skip zero-length lines
@@ -414,7 +414,7 @@ void IniReader::ReadIniFile(string filename, bool isSystemFile)
 			// a line has to have an equals sign
 			if ((equalsIndex = line.find_first_of("=")) == string::npos)
 			{
-				ERROR("Malformed Line "<<lineNumber<<" (missing equals)");
+				ERROR_DRAM("Malformed Line "<<lineNumber<<" (missing equals)");
 				abort();
 			}
 			size_t strlen = line.size();
@@ -429,7 +429,7 @@ void IniReader::ReadIniFile(string filename, bool isSystemFile)
 	}
 	else
 	{
-		ERROR ("Unable to load ini file "<<filename);
+		ERROR_DRAM ("Unable to load ini file "<<filename);
 		abort();
 	}
 }
@@ -438,7 +438,7 @@ void IniReader::OverrideKeys(vector<string> keys, vector<string>values)
 {
 	if (keys.size() != values.size())
 	{
-		ERROR("-o option is messed up");
+		ERROR_DRAM("-o option is messed up");
 		exit(-1);
 	}
 	for (size_t i=0; i<keys.size(); i++)
@@ -461,7 +461,7 @@ bool IniReader::CheckIfAllSet()
 			case UINT:
 			case UINT64:
 			case FLOAT:
-				ERROR("Cannot continue without key '"<<configMap[i].iniKey<<"' set.");
+				ERROR_DRAM("Cannot continue without key '"<<configMap[i].iniKey<<"' set.");
 				return false;
 				break;
 			case BOOL:

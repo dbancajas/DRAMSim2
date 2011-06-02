@@ -105,7 +105,7 @@ extern uint IDD5;
 extern uint IDD6;
 extern uint IDD6L;
 extern uint IDD7;
-extern float Vdd; 
+extern float Vdd2; 
 extern unsigned NUM_DEVICES;
 
 //same bank

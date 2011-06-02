@@ -40,11 +40,12 @@ using namespace std;
 
 Transaction::Transaction() {}
 
-Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat)
+Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat, uint32_t _transId)
 {
 	transactionType = transType;
 	address = addr;
 	data = dat;
+	transId = _transId;
 }
 
 void Transaction::print()

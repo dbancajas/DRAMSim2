@@ -28,7 +28,8 @@
 class some_object
 {
 	public: 
-		void read_complete(uint, uint64_t, uint64_t);
-		void write_complete(uint, uint64_t, uint64_t);
+		some_object();
+		void read_complete(uint, uint64_t, uint64_t,uint32_t);
+		void write_complete(uint, uint64_t, uint64_t,uint32_t);
 		int add_one_and_run();
 };

@@ -36,7 +36,7 @@
 using namespace DRAMSim;
 using namespace std;
 
-BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr, uint col, uint rw, uint r, uint b, void *dat)
+BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr, uint col, uint rw, uint r, uint b, void *dat, uint32_t _transId)
 {
 	physicalAddress = physicalAddr;
 	busPacketType = packtype;
@@ -45,6 +45,7 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr, uint col, ui
 	bank = b;
 	column = col;
 	row = rw;
+	transId = _transId;
 }
 
 BusPacket::BusPacket() {}
@@ -84,7 +85,7 @@ void BusPacket::print(uint64_t currentClockCycle, bool dataStart)
 			//TODO: data verification?
 			break;
 		default:
-			ERROR("Trying to print unknown kind of bus packet");
+			ERROR_DRAM("Trying to print unknown kind of bus packet");
 			exit(-1);
 		}
 	}
@@ -126,7 +127,7 @@ void BusPacket::print()
 			PRINT("");
 			break;
 		default:
-			ERROR("Trying to print unknown kind of bus packet");
+			ERROR_DRAM("Trying to print unknown kind of bus packet");
 			exit(-1);
 		}
 	}

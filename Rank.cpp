@@ -84,7 +84,7 @@ void Rank::receiveFromBus(BusPacket *packet)
 		        packet->row != bankStates[packet->bank].openRowAddress)
 		{
 			packet->print();
-			ERROR("== Error - Rank " << id << " received a READ when not allowed");
+			ERROR_DRAM("== Error - Rank " << id << " received a READ when not allowed");
 			exit(0);
 		}
 
@@ -111,7 +111,7 @@ void Rank::receiveFromBus(BusPacket *packet)
 		        currentClockCycle < bankStates[packet->bank].nextRead ||
 		        packet->row != bankStates[packet->bank].openRowAddress)
 		{
-			ERROR("== Error - Rank " << id << " received a READ_P when not allowed");
+			ERROR_DRAM("== Error - Rank " << id << " received a READ_P when not allowed");
 			exit(-1);
 		}
 
@@ -141,7 +141,7 @@ void Rank::receiveFromBus(BusPacket *packet)
 		        currentClockCycle < bankStates[packet->bank].nextWrite ||
 		        packet->row != bankStates[packet->bank].openRowAddress)
 		{
-			ERROR("== Error - Rank " << id << " received a WRITE when not allowed");
+			ERROR_DRAM("== Error - Rank " << id << " received a WRITE when not allowed");
 			bankStates[packet->bank].print();
 			exit(0);
 		}
@@ -166,7 +166,7 @@ void Rank::receiveFromBus(BusPacket *packet)
 		        currentClockCycle < bankStates[packet->bank].nextWrite ||
 		        packet->row != bankStates[packet->bank].openRowAddress)
 		{
-			ERROR("== Error - Rank " << id << " received a WRITE_P when not allowed");
+			ERROR_DRAM("== Error - Rank " << id << " received a WRITE_P when not allowed");
 			exit(0);
 		}
 
@@ -190,7 +190,7 @@ void Rank::receiveFromBus(BusPacket *packet)
 		if (bankStates[packet->bank].currentBankState != Idle ||
 		        currentClockCycle < bankStates[packet->bank].nextActivate)
 		{
-			ERROR("== Error - Rank " << id << " received an ACT when not allowed");
+			ERROR_DRAM("== Error - Rank " << id << " received an ACT when not allowed");
 			packet->print();
 			bankStates[packet->bank].print();
 			exit(0);
@@ -227,7 +227,7 @@ void Rank::receiveFromBus(BusPacket *packet)
 		if (bankStates[packet->bank].currentBankState != RowActive ||
 		        currentClockCycle < bankStates[packet->bank].nextPrecharge)
 		{
-			ERROR("== Error - Rank " << id << " received a PRE when not allowed");
+			ERROR_DRAM("== Error - Rank " << id << " received a PRE when not allowed");
 			exit(0);
 		}
 
@@ -241,7 +241,7 @@ void Rank::receiveFromBus(BusPacket *packet)
 		{
 			if (bankStates[i].currentBankState != Idle)
 			{
-				ERROR("== Error - Rank " << id << " received a REF when not allowed");
+				ERROR_DRAM("== Error - Rank " << id << " received a REF when not allowed");
 				exit(0);
 			}
 			bankStates[i].nextActivate = currentClockCycle + tRFC;
@@ -269,7 +269,7 @@ void Rank::receiveFromBus(BusPacket *packet)
 		delete(packet);
 		break;
 	default:
-		ERROR("== Error - Unknown BusPacketType trying to be sent to Bank");
+		ERROR_DRAM("== Error - Unknown BusPacketType trying to be sent to Bank");
 		exit(0);
 		break;
 	}
@@ -333,7 +333,7 @@ void Rank::powerDown()
 	{
 		if (bankStates[i].currentBankState != Idle)
 		{
-			ERROR("== Error - Trying to power down rank " << id << " while not all banks are idle");
+			ERROR_DRAM("== Error - Trying to power down rank " << id << " while not all banks are idle");
 			exit(0);
 		}
 
@@ -349,7 +349,7 @@ void Rank::powerUp()
 {
 	if (!isPowerDown)
 	{
-		ERROR("== Error - Trying to power up rank " << id << " while it is not already powered down");
+		ERROR_DRAM("== Error - Trying to power up rank " << id << " while it is not already powered down");
 		exit(0);
 	}
 
@@ -359,8 +359,8 @@ void Rank::powerUp()
 	{
 		if (bankStates[i].nextPowerUp > currentClockCycle)
 		{
-			ERROR("== Error - Trying to power up rank " << id << " before we're allowed to");
-			ERROR(bankStates[i].nextPowerUp << "    " << currentClockCycle);
+			ERROR_DRAM("== Error - Trying to power up rank " << id << " before we're allowed to");
+			ERROR_DRAM(bankStates[i].nextPowerUp << "    " << currentClockCycle);
 			exit(0);
 		}
 		bankStates[i].nextActivate = currentClockCycle + tXP;

@@ -105,7 +105,7 @@ void Bank::write(const BusPacket *busPacket)
 
 	if (busPacket->column >= NUM_COLS)
 	{
-		ERROR("== Error - Bus Packet column "<< busPacket->column <<" out of bounds");
+		ERROR_DRAM("== Error - Bus Packet column "<< busPacket->column <<" out of bounds");
 		exit(-1);
 	}
 

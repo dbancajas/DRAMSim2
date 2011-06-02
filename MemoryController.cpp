@@ -133,7 +133,7 @@ void MemoryController::receiveFromBus(BusPacket *bpacket)
 {
 	if (bpacket->busPacketType != DATA)
 	{
-		ERROR("== Error - Memory Controller received a non-DATA bus packet from rank");
+		ERROR_DRAM("== Error - Memory Controller received a non-DATA bus packet from rank");
 		bpacket->print();
 		exit(0);
 	}
@@ -145,7 +145,7 @@ void MemoryController::receiveFromBus(BusPacket *bpacket)
 	}
 
 	//add to return read data queue
-	returnTransaction.push_back(Transaction(RETURN_DATA, bpacket->physicalAddress, bpacket->data));
+	returnTransaction.push_back(Transaction(RETURN_DATA, bpacket->physicalAddress, bpacket->data,bpacket->transId));
 	totalReadsPerBank[SEQUENTIAL(bpacket->rank,bpacket->bank)]++;
 
 	// this delete statement saves a mindboggling amount of memory
@@ -157,7 +157,7 @@ void MemoryController::returnReadData(const Transaction &trans)
 {
 	if (parentMemorySystem->ReturnReadData!=NULL)
 	{
-		(*parentMemorySystem->ReturnReadData)(parentMemorySystem->systemID, trans.address, currentClockCycle);
+		(*parentMemorySystem->ReturnReadData)(parentMemorySystem->systemID, trans.address, currentClockCycle,trans.transId);
 	}
 }
 
@@ -229,7 +229,7 @@ void MemoryController::update()
 			//inform upper levels that a write is done
 			if (parentMemorySystem->WriteDataDone!=NULL)
 			{
-				(*parentMemorySystem->WriteDataDone)(parentMemorySystem->systemID,outgoingDataPacket->physicalAddress, currentClockCycle);
+				(*parentMemorySystem->WriteDataDone)(parentMemorySystem->systemID,outgoingDataPacket->physicalAddress, currentClockCycle,outgoingDataPacket->transId);
 			}
 
 			(*ranks)[outgoingDataPacket->rank].receiveFromBus(outgoingDataPacket);
@@ -262,7 +262,7 @@ void MemoryController::update()
 			// queue up the packet to be sent
 			if (outgoingDataPacket != NULL)
 			{
-				ERROR("== Error - Data Bus Collision");
+				ERROR_DRAM("== Error - Data Bus Collision");
 				exit(-1);
 			}
 
@@ -306,7 +306,7 @@ void MemoryController::update()
 
 			writeDataToSend.push_back(new BusPacket(DATA, poppedBusPacket->physicalAddress, poppedBusPacket->column,
 			                                    poppedBusPacket->row, poppedBusPacket->rank, poppedBusPacket->bank,
-			                                    poppedBusPacket->data));
+			                                    poppedBusPacket->data,poppedBusPacket->transId));
 			writeDataCountdown.push_back(WL);
 		}
 
@@ -527,7 +527,7 @@ void MemoryController::update()
 
 			break;
 		default:
-			ERROR("== Error - Popped a command we shouldn't have of type : " << poppedBusPacket->busPacketType);
+			ERROR_DRAM("== Error - Popped a command we shouldn't have of type : " << poppedBusPacket->busPacketType);
 			exit(0);
 		}
 
@@ -541,7 +541,7 @@ void MemoryController::update()
 		//check for collision on bus
 		if (outgoingCmdPacket != NULL)
 		{
-			ERROR("== Error - Command Bus Collision");
+			ERROR_DRAM("== Error - Command Bus Collision");
 			exit(-1);
 		}
 		outgoingCmdPacket = poppedBusPacket;
@@ -594,7 +594,7 @@ void MemoryController::update()
 
 			//create activate command to the row we just translated
 			BusPacket *ACTcommand = new BusPacket(ACTIVATE, transaction.address, newTransactionColumn, newTransactionRow,
-			                                 newTransactionRank, newTransactionBank, 0);
+			                                 newTransactionRank, newTransactionBank, 0,-1);
 			commandQueue.enqueue(ACTcommand);
 
 			//create read or write command and enqueue it
@@ -604,13 +604,13 @@ void MemoryController::update()
 				if (rowBufferPolicy == OpenPage)
 				{
 					READcommand = new BusPacket(READ, transaction.address, newTransactionColumn, newTransactionRow,
-					                        newTransactionRank, newTransactionBank,0);
+					                        newTransactionRank, newTransactionBank,0,transaction.transId);
 					commandQueue.enqueue(READcommand);
 				}
 				else if (rowBufferPolicy == ClosePage)
 				{
 					READcommand = new BusPacket(READ_P, transaction.address, newTransactionColumn, newTransactionRow,
-					                        newTransactionRank, newTransactionBank,0);
+					                        newTransactionRank, newTransactionBank,0,transaction.transId);
 					commandQueue.enqueue(READcommand);
 				}
 			}
@@ -620,19 +620,19 @@ void MemoryController::update()
 				if (rowBufferPolicy == OpenPage)
 				{
 					WRITEcommand = new BusPacket(WRITE, transaction.address, newTransactionColumn, newTransactionRow,
-					                         newTransactionRank, newTransactionBank, transaction.data);
+					                         newTransactionRank, newTransactionBank, transaction.data,transaction.transId);
 					commandQueue.enqueue(WRITEcommand);
 				}
 				else if (rowBufferPolicy == ClosePage)
 				{
 					WRITEcommand = new BusPacket(WRITE_P, transaction.address, newTransactionColumn, newTransactionRow,
-					                         newTransactionRank, newTransactionBank, transaction.data);
+					                         newTransactionRank, newTransactionBank, transaction.data,transaction.transId);
 					commandQueue.enqueue(WRITEcommand);
 				}
 			}
 			else
 			{
-				ERROR("== Error -	 Unknown transaction type");
+				ERROR_DRAM("== Error -	 Unknown transaction type");
 				exit(0);
 			}
 		}
@@ -1020,7 +1020,7 @@ void MemoryController::addressMapping(uint64_t physicalAddress, uint &newTransac
 	}
 	else
 	{
-		ERROR("== Error - Unknown Address Mapping Scheme");
+		ERROR_DRAM("== Error - Unknown Address Mapping Scheme");
 		exit(-1);
 	}
 
@@ -1093,11 +1093,11 @@ void MemoryController::printStats(bool finalStats)
 		}
 
 		// factor of 1000 at the end is to account for the fact that totalEnergy is accumulated in mJ since IDD values are given in mA
-		backgroundPower[i] = ((double)backgroundEnergy[i] / (double)(cyclesElapsed)) * Vdd / 1000.0;
-		burstPower[i] = ((double)burstEnergy[i] / (double)(cyclesElapsed)) * Vdd / 1000.0;
-		refreshPower[i] = ((double) refreshEnergy[i] / (double)(cyclesElapsed)) * Vdd / 1000.0;
-		actprePower[i] = ((double)actpreEnergy[i] / (double)(cyclesElapsed)) * Vdd / 1000.0;
-		averagePower[i] = ((backgroundEnergy[i] + burstEnergy[i] + refreshEnergy[i] + actpreEnergy[i]) / (double)cyclesElapsed) * Vdd / 1000.0;
+		backgroundPower[i] = ((double)backgroundEnergy[i] / (double)(cyclesElapsed)) * Vdd2 / 1000.0;
+		burstPower[i] = ((double)burstEnergy[i] / (double)(cyclesElapsed)) * Vdd2 / 1000.0;
+		refreshPower[i] = ((double) refreshEnergy[i] / (double)(cyclesElapsed)) * Vdd2 / 1000.0;
+		actprePower[i] = ((double)actpreEnergy[i] / (double)(cyclesElapsed)) * Vdd2 / 1000.0;
+		averagePower[i] = ((backgroundEnergy[i] + burstEnergy[i] + refreshEnergy[i] + actpreEnergy[i]) / (double)cyclesElapsed) * Vdd2 / 1000.0;
 
 		if ((*parentMemorySystem->ReportPower)!=NULL)
 		{
@@ -1163,7 +1163,7 @@ void MemoryController::printStats(bool finalStats)
 }
 MemoryController::~MemoryController()
 {
-	//ERROR("MEMORY CONTROLLER DESTRUCTOR");
+	//ERROR_DRAM("MEMORY CONTROLLER DESTRUCTOR");
 	//abort();
 }
 //inserts a latency into the latency histogram

@@ -55,10 +55,11 @@ public:
 	void *data;
 	uint64_t timeAdded;
 	uint64_t timeReturned;
+	uint32_t transId; //unique transaction Id passed by the caller
 
 
 	//functions
-	Transaction(TransactionType transType, uint64_t addr, void *data);
+	Transaction(TransactionType transType, uint64_t addr, void *data, uint32_t _transId);
 	Transaction();
 
 	void print();

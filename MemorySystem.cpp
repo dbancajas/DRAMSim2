@@ -92,7 +92,7 @@ MemorySystem::MemorySystem(uint id, string deviceIniFilename, string systemIniFi
 	//calculate the total storage based on the devices the user selected and the number of
 
 	// number of bytes per rank
-	unsigned long megsOfStoragePerRank = ((((long)NUM_ROWS * (NUM_COLS * DEVICE_WIDTH) * NUM_BANKS) * ((long)JEDEC_DATA_BUS_WIDTH / DEVICE_WIDTH)) / 8) >> 20;
+	unsigned long megsOfStoragePerRank = 16;//((((long)NUM_ROWS * (NUM_COLS * DEVICE_WIDTH) * NUM_BANKS) * ((long)JEDEC_DATA_BUS_WIDTH / DEVICE_WIDTH)) / 8) >> 20;
 
 	// If this is set, effectively override the number of ranks
 	if (megsOfMemory != 0)
@@ -156,7 +156,7 @@ void MemorySystem::overrideSystemParam(string keyValuePair)
 MemorySystem::~MemorySystem()
 {
 	/* the MemorySystem should exist for all time, nothing should be destroying it */  
-//	ERROR("MEMORY SYSTEM DESTRUCTOR with ID "<<systemID);
+//	ERROR_DRAM("MEMORY SYSTEM DESTRUCTOR with ID "<<systemID);
 //	abort();
 
 	delete(memoryController);
@@ -210,7 +210,7 @@ string MemorySystem::SetOutputFileName(string traceFilename)
 	dramsim_log.open(dramsimLogFilename.c_str(), ios_base::out | ios_base::trunc );
 	if (!dramsim_log) 
 	{
-		ERROR("Cannot open "<< dramsimLogFilename);
+		ERROR_DRAM("Cannot open "<< dramsimLogFilename);
 		exit(-1); 
 	}
 #endif
@@ -228,7 +228,7 @@ string MemorySystem::SetOutputFileName(string traceFilename)
 		cmd_verify_out.open(verify_filename.c_str());
 		if (!cmd_verify_out)
 		{
-			ERROR("Cannot open "<< verify_filename);
+			ERROR_DRAM("Cannot open "<< verify_filename);
 			exit(-1);
 		}
 	}
@@ -341,7 +341,7 @@ void MemorySystem::mkdirIfNotExist(string path)
 	{
 		if (!S_ISDIR(stat_buf.st_mode))
 		{
-			ERROR(path << "is not a directory");
+			ERROR_DRAM(path << "is not a directory");
 			abort();
 		}
 	}
@@ -353,10 +353,10 @@ bool MemorySystem::WillAcceptTransaction()
 //	return memoryController->WillAcceptTransaction();
 }
 
-bool MemorySystem::addTransaction(bool isWrite, uint64_t addr)
+bool MemorySystem::addTransaction(bool isWrite, uint64_t addr,uint32_t _transId)
 {
 	TransactionType type = isWrite ? DATA_WRITE : DATA_READ;
-	Transaction trans(type,addr,NULL);
+	Transaction trans(type,addr,NULL,_transId);
 	// push_back in memoryController will make a copy of this during
 	// addTransaction so it's kosher for the reference to be local 
 
@@ -398,7 +398,7 @@ void MemorySystem::update()
 		visDataOut.open(visOutputFilename.c_str());
 		if (!visDataOut)
 		{
-			ERROR("Cannot open '"<<visOutputFilename<<"'");
+			ERROR_DRAM("Cannot open '"<<visOutputFilename<<"'");
 			exit(-1);
 		}
 
@@ -433,13 +433,13 @@ void MemorySystem::update()
 	//PRINT("\n"); // two new lines
 }
 
-void MemorySystem::RegisterCallbacks( Callback_t* readCB, Callback_t* writeCB,
-                                      void (*reportPower)(double bgpower, double burstpower,
-                                                          double refreshpower, double actprepower))
+void MemorySystem::RegisterCallbacks( Callback_t* readCB, Callback_t* writeCB)//,
+                                      //void (*reportPower)(double bgpower, double burstpower,
+                                                          //double refreshpower, double actprepower))
 {
 	ReturnReadData = readCB;
 	WriteDataDone = writeCB;
-	ReportPower = reportPower;
+	//ReportPower = reportPower;
 }
 
 // static allocator for the library interface 

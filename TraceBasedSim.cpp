@@ -100,7 +100,7 @@ void *parseTraceFileLine(string &line, uint64_t &addr, enum TransactionType &tra
 		}
 		else
 		{
-			ERROR("== Unknown Command : "<<cmdStr);
+			ERROR_DRAM("== Unknown Command : "<<cmdStr);
 			exit(0);
 		}
 
@@ -141,7 +141,7 @@ void *parseTraceFileLine(string &line, uint64_t &addr, enum TransactionType &tra
 		}
 		else
 		{
-			ERROR("== Unknown command in tracefile : "<<cmdStr);
+			ERROR_DRAM("== Unknown command in tracefile : "<<cmdStr);
 		}
 
 		istringstream a(addressStr.substr(2));//gets rid of 0x
@@ -161,7 +161,7 @@ void *parseTraceFileLine(string &line, uint64_t &addr, enum TransactionType &tra
 		spaceIndex = line.find_first_of(" ", spaceIndex+1);
 		if (spaceIndex == string::npos)
 		{
-			ERROR("Malformed line: '"<< line <<"'");
+			ERROR_DRAM("Malformed line: '"<< line <<"'");
 		}
 
 		addressStr = line.substr(previousIndex,spaceIndex);
@@ -193,7 +193,7 @@ void *parseTraceFileLine(string &line, uint64_t &addr, enum TransactionType &tra
 		}
 		else
 		{
-			ERROR("INVALID COMMAND '"<<cmdStr<<"'");
+			ERROR_DRAM("INVALID COMMAND '"<<cmdStr<<"'");
 			exit(-1);
 		}
 		if (SHOW_SIM_OUTPUT)
@@ -243,6 +243,7 @@ int main(int argc, char **argv)
 	string deviceIniFilename = "";
 	string pwdString = "";
 	unsigned megsOfMemory=2048;
+	int transid=0;
 
 	bool overrideOpt = false;
 	string overrideKey = "";
@@ -346,7 +347,7 @@ int main(int argc, char **argv)
 	}
 	else
 	{
-		ERROR("== Unknown Tracefile Type : "<<temp);
+		ERROR_DRAM("== Unknown Tracefile Type : "<<temp);
 		exit(0);
 	}
 
@@ -354,7 +355,7 @@ int main(int argc, char **argv)
 	// no default value for the default model name
 	if (deviceIniFilename.length() == 0)
 	{
-		ERROR("Please provide a device ini file");
+		ERROR_DRAM("Please provide a device ini file");
 		usage();
 		exit(-1);
 	}
@@ -402,7 +403,7 @@ int main(int argc, char **argv)
 				if (line.size() > 0)
 				{
 					data = parseTraceFileLine(line, addr, transType,clockCycle, traceType);
-					trans = Transaction(transType, addr, data);
+					trans = Transaction(transType, addr, data,transid++);
 
 					if (i>=clockCycle)
 					{

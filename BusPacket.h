@@ -60,9 +60,10 @@ public:
 	uint rank;
 	uint64_t physicalAddress;
 	void *data;
+	uint32_t transId;
 
 	//Functions
-	BusPacket(BusPacketType packtype, uint64_t physicalAddr, uint col, uint rw, uint r, uint b, void *dat);
+	BusPacket(BusPacketType packtype, uint64_t physicalAddr, uint col, uint rw, uint r, uint b, void *dat,uint32_t transId);
 	BusPacket();
 
 	void print();

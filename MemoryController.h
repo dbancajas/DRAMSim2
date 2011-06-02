@@ -65,7 +65,6 @@ public:
 	void update();
 	void printStats(bool finalStats = false);
 
-
 	//fields
 	vector<Transaction> transactionQueue;
 	vector< vector <BankState> > bankStates;

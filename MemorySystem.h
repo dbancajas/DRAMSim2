@@ -28,18 +28,18 @@
 //
 //Header file for JEDEC memory system wrapper
 //
-
+//new comment
 #include "SimulatorObject.h"
 #include "SystemConfiguration.h"
 #include "MemoryController.h"
 #include "Rank.h"
 #include "Transaction.h"
 #include "Callback.h"
-#include <deque>
+#include<deque>
 
 namespace DRAMSim
 {
-typedef CallbackBase<void,uint,uint64_t,uint64_t> Callback_t;
+typedef CallbackBase<void, uint, uint64_t, uint64_t, uint32_t> Callback_t;
 class MemorySystem : public SimulatorObject
 {
 public:
@@ -49,14 +49,15 @@ public:
 	void update();
 	bool addTransaction(Transaction &trans);
 	bool addTransaction(bool isWrite, uint64_t addr);
+	bool addTransaction(bool isWrite, uint64_t addr,uint32_t _transId);
 	void printStats();
 	void printStats(bool unused);
 	bool WillAcceptTransaction();
 	string SetOutputFileName(string tracefilename);
 	void RegisterCallbacks(
 	    Callback_t *readDone,
-	    Callback_t *writeDone,
-	    void (*reportPower)(double bgpower, double burstpower, double refreshpower, double actprepower));
+	    Callback_t *writeDone);//,
+	    //void (*reportPower)(double bgpower, double burstpower, double refreshpower, double actprepower));
 
 
 	// mostly for other simulators

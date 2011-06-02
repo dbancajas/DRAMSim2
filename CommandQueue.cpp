@@ -61,7 +61,7 @@ CommandQueue::CommandQueue(vector< vector<BankState> > &states) :
 	}
 	else
 	{
-		ERROR("== Error - Unknown queuing structure");
+		ERROR_DRAM("== Error - Unknown queuing structure");
 		exit(0);
 	}
 
@@ -99,7 +99,7 @@ CommandQueue::CommandQueue(vector< vector<BankState> > &states) :
 }
 CommandQueue::~CommandQueue()
 {
-	//ERROR("COMMAND QUEUE destructor");
+	//ERROR_DRAM("COMMAND QUEUE destructor");
 	size_t bankMax = NUM_RANKS;
 	if (queuingStructure == PerRank) {
 		bankMax = 1; 
@@ -126,8 +126,8 @@ void CommandQueue::enqueue(BusPacket *newBusPacket)
 		queues[rank][0].push_back(newBusPacket);
 		if (queues[rank][0].size()>CMD_QUEUE_DEPTH)
 		{
-			ERROR("== Error - Enqueued more than allowed in command queue");
-			ERROR("						Need to call .hasRoomFor(int numberToEnqueue, uint rank, uint bank) first");
+			ERROR_DRAM("== Error - Enqueued more than allowed in command queue");
+			ERROR_DRAM("						Need to call .hasRoomFor(int numberToEnqueue, uint rank, uint bank) first");
 			exit(0);
 		}
 	}
@@ -136,14 +136,14 @@ void CommandQueue::enqueue(BusPacket *newBusPacket)
 		queues[rank][bank].push_back(newBusPacket);
 		if (queues[rank][bank].size()>CMD_QUEUE_DEPTH)
 		{
-			ERROR("== Error - Enqueued more than allowed in command queue");
-			ERROR("						Need to call .hasRoomFor(int numberToEnqueue, uint rank, uint bank) first");
+			ERROR_DRAM("== Error - Enqueued more than allowed in command queue");
+			ERROR_DRAM("						Need to call .hasRoomFor(int numberToEnqueue, uint rank, uint bank) first");
 			exit(0);
 		}
 	}
 	else
 	{
-		ERROR("== Error - Unknown queuing structure");
+		ERROR_DRAM("== Error - Unknown queuing structure");
 		exit(0);
 	}
 }
@@ -227,7 +227,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 				//	reset flags and rank pointer
 				if (!foundActiveOrTooEarly && bankStates[refreshRank][0].currentBankState != PowerDown)
 				{
-					*busPacket = new BusPacket(REFRESH, 0, 0, 0, refreshRank, 0, 0);
+					*busPacket = new BusPacket(REFRESH, 0, 0, 0, refreshRank, 0, 0,-1);
 					refreshRank = -1;
 					refreshWaiting = false;
 					sendingREF = true;
@@ -330,7 +330,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 						if (closeRow && currentClockCycle >= bankStates[refreshRank][i].nextPrecharge)
 						{
 							rowAccessCounters[refreshRank][i]=0;
-							*busPacket = new BusPacket(PRECHARGE, 0, 0, 0, refreshRank, i, 0);
+							*busPacket = new BusPacket(PRECHARGE, 0, 0, 0, refreshRank, i, 0,-1);
 							sendingREForPRE = true;
 						}
 						break;
@@ -349,7 +349,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 				//	reset flags and rank pointer
 				if (sendREF && bankStates[refreshRank][0].currentBankState != PowerDown)
 				{
-					*busPacket = new BusPacket(REFRESH, 0, 0, 0, refreshRank, 0, 0);
+					*busPacket = new BusPacket(REFRESH, 0, 0, 0, refreshRank, 0, 0,-1);
 					refreshRank = -1;
 					refreshWaiting = false;
 					sendingREForPRE = true;
@@ -454,7 +454,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 								{
 									sendingPRE = true;
 									rowAccessCounters[nextRankPRE][nextBankPRE]=0;
-									*busPacket = new BusPacket(PRECHARGE, 0, 0, 0, nextRankPRE, nextBankPRE, 0);
+									*busPacket = new BusPacket(PRECHARGE, 0, 0, 0, nextRankPRE, nextBankPRE, 0,-1);
 									break;
 								}
 							}
@@ -490,7 +490,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 						}
 						else
 						{
-							ERROR("== Error - Unknown scheduling policy");
+							ERROR_DRAM("== Error - Unknown scheduling policy");
 							exit(0);
 						}
 
@@ -553,7 +553,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 				//	reset flags and pointers
 				if (!foundActiveOrTooEarly && bankStates[refreshRank][0].currentBankState != PowerDown)
 				{
-					*busPacket = new BusPacket(REFRESH, 0, 0, 0, refreshRank, 0, 0);
+					*busPacket = new BusPacket(REFRESH, 0, 0, 0, refreshRank, 0, 0,-1);
 					refreshRank = -1;
 					refreshWaiting = false;
 					sendingREF = true;
@@ -612,7 +612,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 					}
 					else
 					{
-						ERROR("== Error - Unknown scheduling policy");
+						ERROR_DRAM("== Error - Unknown scheduling policy");
 						exit(0);
 					}
 				}
@@ -666,7 +666,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 						{
 							rowAccessCounters[refreshRank][i]=0;
 
-							*busPacket = new BusPacket(PRECHARGE, 0, 0, 0, refreshRank, i, 0);
+							*busPacket = new BusPacket(PRECHARGE, 0, 0, 0, refreshRank, i, 0,-1);
 							sendingREForPRE = true;
 						}
 						break;
@@ -685,7 +685,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 				//	reset flags and rank pointer
 				if (sendREF && bankStates[refreshRank][0].currentBankState != PowerDown)
 				{
-					*busPacket = new BusPacket(REFRESH, 0, 0, 0, refreshRank, 0, 0);
+					*busPacket = new BusPacket(REFRESH, 0, 0, 0, refreshRank, 0, 0,-1);
 					refreshRank = -1;
 					refreshWaiting = false;
 					sendingREForPRE = true;
@@ -780,7 +780,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 					}
 					else
 					{
-						ERROR("== Error - Unknown scheduling policy");
+						ERROR_DRAM("== Error - Unknown scheduling policy");
 						exit(0);
 					}
 				}
@@ -817,7 +817,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 									rowAccessCounters[nextRankPRE][nextBankPRE] = 0;
 
 									sendingPRE = true;
-									*busPacket = new BusPacket(PRECHARGE, 0, 0, 0, nextRankPRE, nextBankPRE, 0);
+									*busPacket = new BusPacket(PRECHARGE, 0, 0, 0, nextRankPRE, nextBankPRE, 0,-1);
 									break;
 								}
 							}
@@ -854,7 +854,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 						}
 						else
 						{
-							ERROR("== Error - Unknown scheduling policy");
+							ERROR_DRAM("== Error - Unknown scheduling policy");
 							exit(0);
 						}
 					}
@@ -868,7 +868,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 	}
 	else
 	{
-		ERROR("== Error - Unknown queuing structure");
+		ERROR_DRAM("== Error - Unknown queuing structure");
 		exit(0);
 	}
 
@@ -914,7 +914,7 @@ bool CommandQueue::pop(BusPacket **busPacket)
 		}
 		else
 		{
-			ERROR("== Error - Unknown scheduling policy");
+			ERROR_DRAM("== Error - Unknown scheduling policy");
 			exit(0);
 		}
 	}
@@ -1049,7 +1049,7 @@ bool CommandQueue::isIssuable(BusPacket *busPacket)
 		}
 		break;
 	default:
-		ERROR("== Error - Trying to issue a crazy bus packet type : ");
+		ERROR_DRAM("== Error - Trying to issue a crazy bus packet type : ");
 		busPacket->print();
 		exit(0);
 	}
