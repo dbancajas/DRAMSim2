@@ -40,8 +40,9 @@
 
 //number of latencies per bucket in the latency histogram
 //TODO: move to system ini file
-#define HISTOGRAM_BIN_SIZE 10
-
+#define HISTOGRAM_BIN_SIZE 100
+#define HISTOGRAM_BIN_EXP_START 8
+#define HISTOGRAM_BIN_EXP_BUCKETS 12
 extern std::ofstream cmd_verify_out; //used by BusPacket.cpp if VERIFICATION_OUTPUT is enabled
 //extern std::ofstream visDataOut;
 

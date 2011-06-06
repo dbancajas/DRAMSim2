@@ -84,6 +84,8 @@ private:
 	vector<Transaction> returnTransaction;
 	vector<Transaction> pendingReadTransactions;
 	map<uint,uint> latencies; // latencyValue -> latencyCount
+	map<uint,uint> histo_exp_latency; //exponential histogram latency
+	unsigned int global_request_count;//count of global reads + writes
 	vector<bool> powerDown;
 
 	vector<Rank> *ranks;

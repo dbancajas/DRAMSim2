@@ -243,6 +243,7 @@ int main(int argc, char **argv)
 	string deviceIniFilename = "";
 	string pwdString = "";
 	unsigned megsOfMemory=2048;
+	unsigned int numOfMemoryController = 1;
 	int transid=0;
 
 	bool overrideOpt = false;
@@ -373,7 +374,7 @@ int main(int argc, char **argv)
 	string line;
 
 
-	MemorySystem *memorySystem = new MemorySystem(0, deviceIniFilename, systemIniFilename, pwdString, traceFileName, megsOfMemory);
+	MemorySystem *memorySystem = new MemorySystem(0, deviceIniFilename, systemIniFilename, pwdString, traceFileName, megsOfMemory, numOfMemoryController);
 
 	uint64_t addr;
 	uint64_t clockCycle=0;

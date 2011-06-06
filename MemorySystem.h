@@ -28,7 +28,7 @@
 //
 //Header file for JEDEC memory system wrapper
 //
-//new comment
+
 #include "SimulatorObject.h"
 #include "SystemConfiguration.h"
 #include "MemoryController.h"
@@ -44,7 +44,7 @@ class MemorySystem : public SimulatorObject
 {
 public:
 	//functions
-	MemorySystem(uint id, string dev, string sys, string pwd, string trc, unsigned megsOfMemory);
+	MemorySystem(uint id, string dev, string sys, string pwd, string trc, unsigned megsOfMemory, unsigned int numOfMemoryController);
 	virtual ~MemorySystem();
 	void update();
 	bool addTransaction(Transaction &trans);

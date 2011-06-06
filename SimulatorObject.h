@@ -41,6 +41,7 @@ namespace DRAMSim
 class SimulatorObject
 {
 public:
+	//virtual ~SimulatorObject();
 	uint64_t currentClockCycle;
 
 	void step();

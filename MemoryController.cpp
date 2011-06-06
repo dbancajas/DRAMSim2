@@ -28,6 +28,9 @@
 
 #include "MemoryController.h"
 #include "MemorySystem.h"
+#include <math.h>
+#include <iomanip>
+#include <iostream>
 
 #define SEQUENTIAL(rank,bank) (rank*NUM_BANKS)+bank
 
@@ -126,6 +129,13 @@ MemoryController::MemoryController(MemorySystem *parent, std::ofstream *outfile)
 	{
 		refreshCountdown.push_back((int)((REFRESH_PERIOD/tCK)/NUM_RANKS)*(i+1));
 	}
+
+	//initialize exponential histogram counters
+	for (size_t i=0; i < HISTOGRAM_BIN_EXP_BUCKETS; i++)
+	{
+		histo_exp_latency[HISTOGRAM_BIN_EXP_START * pow(2,i)]=0;	
+	}
+	global_request_count=0;
 }
 
 //get a bus packet from either data or cmd bus
@@ -1128,6 +1138,24 @@ void MemoryController::printStats(bool finalStats)
 	// only print the latency histogram at the end of the simulation since it clogs the output too much to print every epoch
 	if (finalStats)
 	{
+		PRINT( " --- Latency Histogram Exponential --\n");
+		PRINT( "# of requests: "<<global_request_count);
+		PRINT( "\t[latency]  count \%" );
+	
+
+		map<uint,uint>::iterator iter;
+		uint temp_count=0;
+
+		for (iter = histo_exp_latency.begin(); iter != histo_exp_latency.end(); iter++)
+		{
+	        	PRINT( "\t["<<iter->first<<"-"<<2*iter->first-1<<"]: "<<iter->second<<" "<<std::fixed<<std::setprecision(2)<<(double)(100*iter->second)/global_request_count<<"%\t");
+			temp_count += iter->second;
+		}
+		PRINT("\t[others]: "<<global_request_count-temp_count<<" "<<double(global_request_count-temp_count)/global_request_count*100<<"%");
+		
+
+		PRINT( "\n\n --- End of Exponential Histogram --");
+
 		PRINT( " ---  Latency list ("<<latencies.size()<<")");
 		PRINT( "       [lat] : #");
 
@@ -1170,6 +1198,20 @@ MemoryController::~MemoryController()
 void MemoryController::insertHistogram(uint latencyValue, uint rank, uint bank)
 {
 	totalEpochLatency[SEQUENTIAL(rank,bank)] += latencyValue;
+	global_request_count++;
+
 	//poor man's way to bin things.
-	latencies[(latencyValue/HISTOGRAM_BIN_SIZE)*HISTOGRAM_BIN_SIZE]++;
+	latencies[(latencyValue/HISTOGRAM_BIN_SIZE)*HISTOGRAM_BIN_SIZE]++;	
+	
+	//poor man's way of doing exponential histogram
+	map<uint,uint>::iterator it;
+	for (it=histo_exp_latency.begin(); it!=histo_exp_latency.end(); it++)
+	{
+		if (latencyValue > it->first && latencyValue <= it->first*2)
+		{
+			it->second++;
+			break;
+		}
+	}
+
 }
