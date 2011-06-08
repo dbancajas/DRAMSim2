@@ -38,7 +38,6 @@
 
 using namespace std;
 
-
 ofstream cmd_verify_out; //used in Rank.cpp and MemoryController.cpp if VERIFICATION_OUTPUT is set
 
 unsigned NUM_DEVICES;
@@ -92,12 +91,16 @@ MemorySystem::MemorySystem(uint id, string deviceIniFilename, string systemIniFi
 	//calculate the total storage based on the devices the user selected and the number of
 
 	// number of bytes per rank
-	unsigned long megsOfStoragePerRank = 16;//((((long)NUM_ROWS * (NUM_COLS * DEVICE_WIDTH) * NUM_BANKS) * ((long)JEDEC_DATA_BUS_WIDTH / DEVICE_WIDTH)) / 8) >> 20;
+	unsigned long megsOfStoragePerRank = 512;//((((long)NUM_ROWS * (NUM_COLS * DEVICE_WIDTH) * NUM_BANKS) * ((long)JEDEC_DATA_BUS_WIDTH / DEVICE_WIDTH)) / 8) >> 20;
 
 	// If this is set, effectively override the number of ranks
 	if (megsOfMemory != 0)
 	{
+#ifndef MMC
 		NUM_RANKS = megsOfMemory / megsOfStoragePerRank;
+#else
+		NUM_RANKS = megsOfMemory / megsOfStoragePerRank / NUM_CONTROLLERS;
+#endif
 		if (NUM_RANKS == 0)
 		{
 			PRINT("WARNING: Cannot create memory system with "<<megsOfMemory<<"MB, defaulting to minimum size of "<<megsOfStoragePerRank<<"MB");
@@ -106,8 +109,11 @@ MemorySystem::MemorySystem(uint id, string deviceIniFilename, string systemIniFi
 	}
 
 	NUM_DEVICES = 64/DEVICE_WIDTH;
+#ifndef MMC
 	TOTAL_STORAGE = (NUM_RANKS * megsOfStoragePerRank); 
-
+#else
+	TOTAL_STORAGE = (NUM_RANKS * megsOfStoragePerRank * NUM_CONTROLLERS); 
+#endif
 	DEBUG("TOTAL_STORAGE : "<< TOTAL_STORAGE << "MB | "<<NUM_RANKS<<" Ranks | "<< NUM_DEVICES <<" Devices per rank");
 
 	IniReader::InitEnumsFromStrings();
@@ -116,9 +122,26 @@ MemorySystem::MemorySystem(uint id, string deviceIniFilename, string systemIniFi
 		exit(-1);
 	}
 
-	memoryController = new MemoryController(this, &visDataOut);
 
 	// TODO: change to other vector constructor?
+
+#ifdef MMC //if using multiple memory controllers we must also have multiple vectors of rank; corresponding to 1 vector of rank per controller
+	for (size_t j=0; j < NUM_CONTROLLERS; j++)
+	{
+		memoryController[j] = new MemoryController(this, &visDataOut);
+		ranks[j] = new vector<Rank>();
+
+		for (size_t i=0; i<NUM_RANKS; i++)
+		{
+			Rank r = Rank();
+			r.setId( j * NUM_CONTROLLERS + i );
+			r.attachMemoryController(memoryController[j]);
+			ranks[j]->push_back(r);
+		}
+		memoryController[j]->attachRanks(ranks[j]);
+	}
+#else
+	memoryController = new MemoryController(this, &visDataOut);
 	ranks = new vector<Rank>();
 
 	for (size_t i=0; i<NUM_RANKS; i++)
@@ -131,6 +154,7 @@ MemorySystem::MemorySystem(uint id, string deviceIniFilename, string systemIniFi
 
 
 	memoryController->attachRanks(ranks);
+#endif
 
 }
 
@@ -159,7 +183,7 @@ MemorySystem::~MemorySystem()
 //	ERROR_DRAM("MEMORY SYSTEM DESTRUCTOR with ID "<<systemID);
 //	abort();
 
-	delete(memoryController);
+/*	delete(memoryController);
 	ranks->clear();
 	delete(ranks);
 	visDataOut.flush();
@@ -168,7 +192,7 @@ MemorySystem::~MemorySystem()
 	{
 		cmd_verify_out.flush();
 		cmd_verify_out.close();
-	}
+	}*/
 #ifdef LOG_OUTPUT
 	dramsim_log.flush();
 	dramsim_log.close();
@@ -360,6 +384,25 @@ bool MemorySystem::addTransaction(bool isWrite, uint64_t addr,uint32_t _transId)
 	// push_back in memoryController will make a copy of this during
 	// addTransaction so it's kosher for the reference to be local 
 
+#ifdef MMC
+	//1.) determine rank # of transaction
+	//2.) send to appropriate mem controller
+	//3.) rank mapping is sequential (i.e. 8 ranks and 4 MCs: rank 0-1 maps to MC #1)
+
+        //map address to rank,bank,row,col
+        uint newTransactionRank, newTransactionBank, newTransactionRow, newTransactionColumn;
+        // pass these in as references so they get set by the addressMapping function
+        memoryController[0]->addressMapping(trans.address, newTransactionRank, newTransactionBank, newTransactionRow, newTransactionColumn);
+	if (memoryController[newTransactionRank%NUM_CONTROLLERS]->WillAcceptTransaction())
+	{
+		return memoryController[newTransactionRank%NUM_CONTROLLERS]->addTransaction(trans);
+	}
+	else
+	{
+		pendingTransactions[newTransactionRank%NUM_CONTROLLERS].push_back(trans);
+		return true;
+	}
+#else
 	if (memoryController->WillAcceptTransaction()) 
 	{
 		return memoryController->addTransaction(trans); // will be true
@@ -369,17 +412,32 @@ bool MemorySystem::addTransaction(bool isWrite, uint64_t addr,uint32_t _transId)
 		pendingTransactions.push_back(trans);
 		return true;
 	}
+#endif
+
 }
 
 bool MemorySystem::addTransaction(Transaction &trans)
 {
+#ifdef MMC
+        uint newTransactionRank, newTransactionBank, newTransactionRow, newTransactionColumn;
+        memoryController[0]->addressMapping(trans.address, newTransactionRank, newTransactionBank, newTransactionRow, newTransactionColumn);
+	return memoryController[newTransactionRank%NUM_CONTROLLERS]->addTransaction(trans);
+#else
 	return memoryController->addTransaction(trans);
+#endif
 }
 
 //prints statistics
 void MemorySystem::printStats()
 {
+#ifdef MMC
+	for (size_t i=0; i < NUM_CONTROLLERS; i++)
+	{
+		memoryController[i]->printStats(true);	
+	}
+#else
 	memoryController->printStats(true);
+#endif
 }
 
 void MemorySystem::printStats(bool)
@@ -409,6 +467,43 @@ void MemorySystem::update()
 
 	//updates the state of each of the objects
 	// NOTE - do not change order
+#ifdef MMC
+	//PRINT(" ----------------- MMC Memory System Update ------------------");
+	for (size_t j=0; j < NUM_CONTROLLERS; j++)
+	{
+		for (size_t k=0; k < NUM_RANKS; k++){
+			(*ranks[j])[k].update();
+		}	
+	}
+
+	for (size_t j=0; j < NUM_CONTROLLERS; j++)
+	{
+		if (pendingTransactions[j].size() > 0 && memoryController[j]->WillAcceptTransaction())
+		{
+			memoryController[j]->addTransaction(pendingTransactions[j].front());
+			pendingTransactions[j].pop_front();	
+		}
+	}
+
+	for (size_t j=0; j < NUM_CONTROLLERS; j++)
+	{
+		memoryController[j]->update();
+	}
+
+	//PRINT(" ----------------- MMC Memory System Update ------------------");
+	for (size_t j=0; j < NUM_CONTROLLERS; j++)
+	{
+		for (size_t k=0;k<NUM_RANKS;k++){
+			(*ranks[j])[k].step();
+		}	
+	}
+	//PRINT(" ----------------- MMC Memory System Update ------------------");
+	for (size_t j=0;j < NUM_CONTROLLERS; j++)
+	{
+		memoryController[j]->step();
+	}
+	//PRINT(" ----------------- MMC Memory System Update ------------------");
+#else
 	for (size_t i=0;i<NUM_RANKS;i++)
 	{
 		(*ranks)[i].update();
@@ -428,6 +523,7 @@ void MemorySystem::update()
 		(*ranks)[i].step();
 	}
 	memoryController->step();
+#endif
 	this->step();
 
 	//PRINT("\n"); // two new lines

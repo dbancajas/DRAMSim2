@@ -68,9 +68,16 @@ public:
 
 	//fields
 	// unfortunately, this is the easiest to keep C++ from initializing my members by default
+	//MemoryController **memoryController;
+#ifndef MMC
 	MemoryController *memoryController;
 	vector<Rank> *ranks;
 	deque<Transaction> pendingTransactions; 
+#else
+	MemoryController *memoryController[NUM_CONTROLLERS];
+	vector<Rank>  *ranks[NUM_CONTROLLERS];
+	deque<Transaction> pendingTransactions[NUM_CONTROLLERS]; 
+#endif
 
 	//output file
 	std::ofstream visDataOut;

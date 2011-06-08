@@ -41,7 +41,11 @@ MemoryController::MemoryController(MemorySystem *parent, std::ofstream *outfile)
 		poppedBusPacket(NULL),
 		totalTransactions(0),
 		channelBitWidth (dramsim_log2(NUM_CHANS)),
+#ifdef MMC
+		rankBitWidth (dramsim_log2(NUM_RANKS * NUM_CONTROLLERS)),
+#else
 		rankBitWidth (dramsim_log2(NUM_RANKS)),
+#endif
 		bankBitWidth (dramsim_log2(NUM_BANKS)),
 		rowBitWidth (dramsim_log2(NUM_ROWS)),
 		colBitWidth (dramsim_log2(NUM_COLS)),
@@ -571,8 +575,12 @@ void MemoryController::update()
 		uint newTransactionRank, newTransactionBank, newTransactionRow, newTransactionColumn;
 
 		// pass these in as references so they get set by the addressMapping function
+#ifdef MMC
 		addressMapping(transaction.address, newTransactionRank, newTransactionBank, newTransactionRow, newTransactionColumn);
-
+		newTransactionRank=(newTransactionRank-newTransactionRank%NUM_CONTROLLERS)/NUM_CONTROLLERS;
+#else
+		addressMapping(transaction.address, newTransactionRank, newTransactionBank, newTransactionRow, newTransactionColumn);
+#endif
 		//if we have room, break up the transaction into the appropriate commands
 		//and add them to the command queue
 		if (commandQueue.hasRoomFor(2, newTransactionRank, newTransactionBank))
@@ -762,6 +770,9 @@ void MemoryController::update()
 				//	}
 				uint rank,bank,row,col;
 				addressMapping(returnTransaction[0].address,rank,bank,row,col);
+#ifdef MMC
+				rank=(rank-rank%NUM_CONTROLLERS)/NUM_CONTROLLERS;
+#endif
 				insertHistogram(currentClockCycle-pendingReadTransactions[i].timeAdded,rank,bank);
 				//return latency
 				returnReadData(pendingReadTransactions[i]);

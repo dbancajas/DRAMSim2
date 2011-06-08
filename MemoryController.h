@@ -51,7 +51,7 @@ namespace DRAMSim
 class MemorySystem;
 class MemoryController : public SimulatorObject
 {
-
+friend class MemorySystem;
 public:
 	//functions
 	MemoryController(MemorySystem* ms, std::ofstream *outfile);
@@ -68,9 +68,10 @@ public:
 	//fields
 	vector<Transaction> transactionQueue;
 	vector< vector <BankState> > bankStates;
+
 private:
 	//functions
-	void addressMapping(uint64_t physicalAddress, uint &rank, uint &bank, uint &row, uint &col);
+	//void addressMapping(uint64_t physicalAddress, uint &rank, uint &bank, uint &row, uint &col); //see below
 	void insertHistogram(uint latencyValue, uint rank, uint bank);
 
 	//fields
@@ -123,6 +124,11 @@ private:
 
 
 	uint refreshRank;
+
+#ifdef MMC
+protected:  //used to expose addressMapping to friend classes of MemoryController;useful in determining proper MC to send data
+#endif
+	void addressMapping(uint64_t physicalAddress, uint &rank, uint &bank, uint &row, uint &col);
 
 };
 }
