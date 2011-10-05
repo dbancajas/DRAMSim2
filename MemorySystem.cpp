@@ -91,7 +91,16 @@ MemorySystem::MemorySystem(uint id, string deviceIniFilename, string systemIniFi
 	//calculate the total storage based on the devices the user selected and the number of
 
 	// number of bytes per rank
-	unsigned long megsOfStoragePerRank = 512;//((((long)NUM_ROWS * (NUM_COLS * DEVICE_WIDTH) * NUM_BANKS) * ((long)JEDEC_DATA_BUS_WIDTH / DEVICE_WIDTH)) / 8) >> 20;
+        uint64_t b1 = (long long int) (NUM_ROWS * (NUM_COLS * DEVICE_WIDTH) * NUM_BANKS);
+        //cout <<"b1: "<<b1<<endl;
+        uint64_t b2 = (long) (JEDEC_DATA_BUS_WIDTH / DEVICE_WIDTH);
+        //cout <<"b2: "<<b2<<endl;
+        uint64_t b3 = (b1 * b2)>>20;
+        //cout <<"b3: "<<b3<<endl;
+        b3 = b3/8;
+        //cout <<"b3: "<<b3<<endl;
+        unsigned long int megsOfStoragePerRank = b3;
+        cout << "per rank: "<<megsOfStoragePerRank <<endl;
 
 	// If this is set, effectively override the number of ranks
 	if (megsOfMemory != 0)
@@ -377,7 +386,7 @@ bool MemorySystem::WillAcceptTransaction()
 //	return memoryController->WillAcceptTransaction();
 }
 
-bool MemorySystem::addTransaction(bool isWrite, uint64_t addr,uint32_t _transId)
+bool MemorySystem::addTransaction(bool isWrite, uint64_t addr, uint32_t _transId, uint32_t proc)
 {
 	TransactionType type = isWrite ? DATA_WRITE : DATA_READ;
 	Transaction trans(type,addr,NULL,_transId);
@@ -413,6 +422,7 @@ bool MemorySystem::addTransaction(bool isWrite, uint64_t addr,uint32_t _transId)
 		return true;
 	}
 #endif
+	//cout<<"addTr; address: "<<addr<<" Rank: "<<newTransactionRank;
 
 }
 
@@ -546,7 +556,18 @@ MemorySystem *getMemorySystemInstance(uint id, string dev, string sys, string pw
 
 } /*namespace DRAMSim */
 
-
+unsigned int MemorySystem::getRank(uint64_t addr)
+{
+   uint newTransactionRank, newTransactionBank, newTransactionRow, newTransactionColumn;
+#ifdef MMC	
+   memoryController[0]->addressMapping(addr, newTransactionRank, newTransactionBank, newTransactionRow, newTransactionColumn);
+#else
+   memoryController->addressMapping(addr, newTransactionRank, newTransactionBank, newTransactionRow, newTransactionColumn);
+#endif
+//   cout<<"address: "<<addr<<" on rank: "<<newTransactionRank<<endl;
+//	cout<<"rank: "<<newTransactionRank<<endl;
+   return newTransactionRank;
+}
 
 // This function can be used by autoconf AC_CHECK_LIB since
 // apparently it can't detect C++ functions.
@@ -559,3 +580,11 @@ extern "C"
 	}
 }
 
+void MemorySystem::printBitWidths(){
+
+#ifdef MMC
+	memoryController[0]->printBitWidths();
+#else
+	memoryController->printBitWidths();
+#endif
+}

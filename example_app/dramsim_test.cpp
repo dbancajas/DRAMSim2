@@ -67,19 +67,19 @@ int some_object::add_one_and_run()
 	mem.addTransaction(tr);
 
 	/* do a bunch of updates (i.e. clocks) -- at some point the callback will fire */
-	for (int i=0; i<10; i++)
+	for (int i=0; i<50; i++)
 	{
-	        Transaction tr = Transaction(DATA_READ, 0x50000+(0x00001)*i, NULL,transid++);
+	        Transaction tr = Transaction(DATA_READ, 0x50000+(0x00100)*i, NULL,transid++);
 		mem.addTransaction(tr);
 	}
-	for (int i=0; i<10; i++)
+	for (int i=0; i<50; i++)
 	{
-	        Transaction tr2 = Transaction(DATA_WRITE, 0x40000+(0x00001)*i*500, NULL,transid++);
+	        Transaction tr2 = Transaction(DATA_WRITE, 0x40000+(0x0A000)*i*500, NULL,transid++);
 	        Transaction tr3 = Transaction(DATA_WRITE, 0x90000, NULL,transid++);
 		mem.addTransaction(tr2);
 		mem.addTransaction(tr3);
 	}
-	for (int i=0; i<400; i++)
+	for (int i=0; i<1400;i++)
 	{
 		mem.update();
 	}	

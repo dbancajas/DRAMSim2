@@ -581,6 +581,7 @@ void MemoryController::update()
 #else
 		addressMapping(transaction.address, newTransactionRank, newTransactionBank, newTransactionRow, newTransactionColumn);
 #endif
+		//cout<<"update; address: "<<transaction.address<<" Rank: "<<newTransactionRank<<endl;
 		//if we have room, break up the transaction into the appropriate commands
 		//and add them to the command queue
 		if (commandQueue.hasRoomFor(2, newTransactionRank, newTransactionBank))
@@ -1224,5 +1225,16 @@ void MemoryController::insertHistogram(uint latencyValue, uint rank, uint bank)
 			break;
 		}
 	}
+
+}
+
+void MemoryController::printBitWidths(){
+        cout<<"Channel:" <<channelBitWidth<<endl;
+        cout<<"Rank:" <<rankBitWidth<<endl;
+        cout<<"Bank:" <<bankBitWidth<<endl;
+        cout<<"Row:" <<rowBitWidth<<endl;
+	cout<<"Col:" <<colBitWidth<<endl;
+        cout<<"Byte:" <<byteOffsetWidth<<endl;
+
 
 }

@@ -64,6 +64,7 @@ public:
 	void attachRanks(vector<Rank> *ranks);
 	void update();
 	void printStats(bool finalStats = false);
+	void printBitWidths();
 
 	//fields
 	vector<Transaction> transactionQueue;
@@ -122,8 +123,8 @@ private:
 	uint colBitWidth;
 	uint byteOffsetWidth;
 
-
 	uint refreshRank;
+
 
 #ifdef MMC
 protected:  //used to expose addressMapping to friend classes of MemoryController;useful in determining proper MC to send data

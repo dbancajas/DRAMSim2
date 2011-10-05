@@ -49,9 +49,10 @@ public:
 	void update();
 	bool addTransaction(Transaction &trans);
 	bool addTransaction(bool isWrite, uint64_t addr);
-	bool addTransaction(bool isWrite, uint64_t addr,uint32_t _transId);
+	bool addTransaction(bool isWrite, uint64_t addr,uint32_t _transId, uint32_t proc);
 	void printStats();
 	void printStats(bool unused);
+	void printBitWidths();
 	bool WillAcceptTransaction();
 	string SetOutputFileName(string tracefilename);
 	void RegisterCallbacks(
@@ -63,8 +64,7 @@ public:
 	// mostly for other simulators
 	void overrideSystemParam(string key, string value);
 	void overrideSystemParam(string kvpair);
-
-
+	unsigned int getRank(uint64_t addr);
 
 	//fields
 	// unfortunately, this is the easiest to keep C++ from initializing my members by default

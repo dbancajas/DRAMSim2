@@ -40,8 +40,8 @@
 
 //number of latencies per bucket in the latency histogram
 //TODO: move to system ini file
-#define MMC //uncomment this to enable multiple memory controllers
-#define NUM_CONTROLLERS 2
+//#define MMC //uncomment this to enable multiple memory controllers
+#define NUM_CONTROLLERS 4
 #define HISTOGRAM_BIN_SIZE 100
 #define HISTOGRAM_BIN_EXP_START 8
 #define HISTOGRAM_BIN_EXP_BUCKETS 12

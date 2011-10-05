@@ -57,6 +57,8 @@ public:
 	void powerUp();
 	void powerDown();
 
+	vector<int> open_columns;
+	unsigned int real_conflict;
 	//fields
 	vector<Bank> banks;
 	MemoryController *memoryController;
