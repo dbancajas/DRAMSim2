@@ -101,6 +101,7 @@ int some_object::add_one_and_run()
 
 int main()
 {
+	srand(time(NULL));
 	printf("dramsim_test main()\n");
 	some_object obj;
 	obj.add_one_and_run();

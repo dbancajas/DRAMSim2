@@ -237,6 +237,7 @@ void *parseTraceFileLine(string &line, uint64_t &addr, enum TransactionType &tra
 int main(int argc, char **argv)
 {
 	int c;
+	int pend=0;
 	string traceFileName = "";
 	TraceType traceType;
 	string systemIniFilename = "ini/system.ini";
@@ -408,13 +409,18 @@ int main(int argc, char **argv)
 
 					if (i>=clockCycle)
 					{
+						if (!(*memorySystem).WillAcceptTransaction()){
+							pend++;
+						}
 						if (!(*memorySystem).addTransaction(trans))
 						{
 							pendingTrans = true;
+							cout<<"there is pending transaction"<<endl;
 						}
 					}
 					else
 					{
+						//cout<<"there is pending transaction"<<endl;
 						pendingTrans = true;
 					}
 				}
@@ -440,6 +446,7 @@ int main(int argc, char **argv)
 	}
 
 	traceFile.close();
+	cout<<"cycles with pending trans:"<<pend<<endl;
 	(*memorySystem).printStats(true);
 	// make valgrind happy
 	delete(memorySystem);
